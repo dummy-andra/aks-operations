@@ -87,8 +87,8 @@ Generate some traffic:
 k6 run --vus 100 --duration 30s -e VOTE_URL=https://<DNSNAME>.<LOCATION>.cloudapp.azure.com/ generate-votes-test.js
 ```
 
-Introduction deliberate issues
-------------------------------
+Introduce some deliberate issues
+--------------------------------
 
 * Make sure some load has been generated a few mins ealrier (~5+ mins).
 * Kill some pods
