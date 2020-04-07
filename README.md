@@ -41,6 +41,9 @@ az aks show -n aks-ops-cbx1 -g aks-ops -o table  # control plane info
 kubectl get nodes -o wide                        # worker node info
 ```
 
+Open VS Code, click the Kubernetes icon and under clusters you should see the new cluster.
+You can also [create new](https://code.visualstudio.com/docs/azure/kubernetes) or add existing clusters via VSCode.
+
 Scale cluster
 -------------
 
@@ -130,6 +133,7 @@ AzureDiagnostics
 
 ### Examine deployments, pods, services in VS Code via Kubernetes (vscode-kubernetes-tools) extension
 
+* Select the cluster you want to use
 * Select namespace `azure-vote`
 * Naviate to Workloads / Deployments
     * Double click `azure-vote-front` deployment to see YAML
