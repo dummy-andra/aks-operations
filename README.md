@@ -91,16 +91,7 @@ Introduce some deliberate issues
 --------------------------------
 
 * Make sure some load has been generated a few mins ealrier (~5+ mins).
-* Kill some pods
-
-TODO:
-- No ACR pull secret/SP role grant acrpull permission
-- Exceed limit/quota constraint - num services, GB RAM, CPU (e.g. mc - millicores, set low and see container insights CPU flame chart)
-- Deploying without node selectors when you have a windows pool
-- AKS 1.16 using deprecated objects/versions
-- Namespace deletion stuck (finalizer issue)
-- Removal of labels/annotations on VMSS nodes (upgrade issues, skip version)
-- Ingress misconfiguration (host, path, service name or port, etc.)
+* Run the Gremlins in `gremlins/` directory, one at a time and diagnose the issue.
 
 Diagnosing issues
 -----------------
@@ -117,8 +108,25 @@ Diagnosing issues
 ### Examine cluster, nodes, controllers, containers in Container Insights (Azure Portal)
 
 * Check the container insights views and live data
-* Select `Logs` from `Moniotring` side navigation menu
+* Select `Logs` from `Monitoring` side navigation menu
 * Enter some KQL queries for Kubernetes Services using tables `AzureDiagnostics`, `AzureActivity`, `ContainerActivity`, `ContainerLog`, `KubeEvents`
+
+```kql
+AzureDiagnostics
+| where Category == 'kube-audit'
+| extend log=parse_json(log_s)
+| where log.verb == 'delete'
+| project log
+| limit 100
+```
+
+```kql
+# KubeEvents
+# | where TimeGenerated > ago(24h)
+# | where Reason in ("Failed")
+# | summarize count() by Reason, bin(TimeGenerated, 5m)
+# | render areachart
+```
 
 ### Examine deployments, pods, services in VS Code via Kubernetes (vscode-kubernetes-tools) extension
 
@@ -148,10 +156,26 @@ kubectl delete -f https://raw.githubusercontent.com/Azure/aks-periscope/master/d
 
 ### Diff Kubernetes objects in namespace vs git repo
 
-TODO
+```sh
+kubectl diff -f apps/azure-vote/ -n azure-vote
+```
 
 TODO
 ----
+
+Issues:
+
+* No ACR pull secret/SP role grant acrpull permission
+* Exceed limit/quota constraint - num services, GB RAM, CPU (e.g. mc - millicores, set low and see container insights CPU flame chart)
+* Deploying without node selectors when you have a windows pool
+* AKS 1.16 using deprecated objects/versions
+* Namespace deletion stuck (finalizer issue)
+* Removal of labels/annotations on VMSS nodes (upgrade issues, skip version)
+* Ingress misconfiguration (host, path, service name or port, etc.)
+* HPA/CAS settings incorrect - pending pods, etc.
+* Namespace limits and/or quotas set too low
+
+Other topics:
 
 * Multiple node pools
 * Windows node pools
