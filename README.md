@@ -109,7 +109,7 @@ k6 run --vus 100 --duration 30s -e VOTE_URL=https://<DNSNAME>.<LOCATION>.cloudap
 Introduce some deliberate issues
 --------------------------------
 
-* Make sure some load has been generated a few mins ealrier (~5+ mins).
+* Make sure some load has been generated a few mins earlier (~5+ mins).
 * Run the Gremlins in `gremlins/` directory, one at a time and diagnose the issue.
 
 Diagnosing issues
@@ -140,11 +140,11 @@ AzureDiagnostics
 ```
 
 ```kql
-# KubeEvents
-# | where TimeGenerated > ago(24h)
-# | where Reason in ("Failed")
-# | summarize count() by Reason, bin(TimeGenerated, 5m)
-# | render areachart
+KubeEvents
+| where TimeGenerated > ago(24h)
+| where Reason in ("Failed")
+| summarize count() by Reason, bin(TimeGenerated, 5m)
+| render areachart
 ```
 
 ### Examine deployments, pods, services in VS Code via Kubernetes (vscode-kubernetes-tools) extension
