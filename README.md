@@ -55,15 +55,31 @@ az aks scale -g aks-ops -n aks-ops-cbx1 --node-count 3 --nodepool-name nodepool1
 Upgrade cluster
 ---------------
 
+Upgrade control plane:
+
 ```sh
 az aks upgrade -n aks-ops-cbx1 -g aks-ops -k 1.15.10 --control-plane-only --yes
+```
 
+Upgrade node pools:
+
+```sh
 az aks show -n aks-ops-cbx1 -g aks-ops -o table  # control plane info
 kubectl get nodes -o wide                        # worker node info
 
 az aks nodepool upgrade --cluster-name aks-ops-cbx1 --resource-group aks-ops -k 1.15.10 --name nodepool1
 kubectl get nodes -o wide -w
 ```
+
+Or, use a blue/green node pool strategy:
+
+* Create new node pool
+* Taint old node pool
+* Drain old node pool
+* Delete old node pool
+
+See [Walkthrough of automating AKS upgrades](https://github.com/cloudnativegbb/aks-upgrades) for sample scripts.
+
 
 Check the Azure Portal while running these commands.
 
