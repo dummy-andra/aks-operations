@@ -13,32 +13,48 @@ Create an AKS cluster
 ---------------------
 
 ```sh
-az group create -n aks-ops -l australiaeast
+source ./aks-ops-env.sh
+
+az group create -n $RG_NAME -l $LOCATION
 ```
 
 ```sh
 az aks get-versions -l australiaeast -o table
 
 KubernetesVersion    Upgrades
--------------------  -----------------------
-1.17.3(preview)      None available
-1.16.7               1.17.3(preview)
-1.15.10              1.16.7
-1.15.7               1.15.10, 1.16.7
-1.14.8               1.15.7, 1.15.10
-1.14.7               1.14.8, 1.15.7, 1.15.10
+-------------------  -------------------------
+1.20.2(preview)      None available
+1.19.7               1.20.2(preview)
+1.19.6               1.19.7, 1.20.2(preview)
+1.18.14              1.19.6, 1.19.7
+1.18.10              1.18.14, 1.19.6, 1.19.7
+1.17.16              1.18.10, 1.18.14
+1.17.13              1.17.16, 1.18.10, 1.18.14
 ```
 
 Create a basic cluster:
 
 ```sh
-az aks create -n aks-ops-cbx1 -g aks-ops -l australiaeast -k 1.15.7 -c 2 -a monitoring --generate-ssh-keys
+az aks create \
+    -n $CLUSTER_NAME \
+    -g $RG_NAME \
+    -l $LOCATION \
+    -k $K8S_VERSION \
+    -c $NODE_COUNT \
+    -a $AKS_ADD_ONS \
+    --generate-ssh-keys \
+    --enable-managed-identity \
+    --enable-aad \
+    --enable-azure-rbac \
+    --auto-upgrade-channel $UPGRADE_CHANNEL \
+    -z 1 2 3
+
 az aks list -o table
-az aks get-credentials -n aks-ops-cbx1 -g aks-ops
+az aks get-credentials -n $CLUSTER_NAME -g $RG_NAME
 az aks install-cli # --install-location /path/to/kubectl
 
-az aks show -n aks-ops-cbx1 -g aks-ops -o table  # control plane info
-kubectl get nodes -o wide                        # worker node info
+az aks show -n $CLUSTER_NAME -g $RG_NAME -o table  # control plane info
+kubectl get nodes -o wide                           # worker node info
 ```
 
 Open VS Code, click the Kubernetes icon and under clusters you should see the new cluster.
@@ -48,17 +64,19 @@ Scale cluster
 -------------
 
 ```sh
-az aks show -g aks-ops -n aks-ops-cbx1 --query agentPoolProfiles[0].name
-az aks scale -g aks-ops -n aks-ops-cbx1 --node-count 3 --nodepool-name nodepool1
+az aks show -n $CLUSTER_NAME -g $RG_NAME --query agentPoolProfiles[0].name
+az aks scale -n $CLUSTER_NAME -g $RG_NAME --node-count 3 --nodepool-name nodepool1
 ```
 
-Upgrade cluster
----------------
+Manually Upgrade cluster
+------------------------
 
 Upgrade control plane:
 
 ```sh
-az aks upgrade -n aks-ops-cbx1 -g aks-ops -k 1.15.10 --control-plane-only --yes
+UPGRADE_TO_VERSION=1.19.6
+
+az aks upgrade -n aks-ops-cbx1 -g aks-ops -k $UPGRADE_TO_VERSION --control-plane-only --yes
 ```
 
 Upgrade node pools:
@@ -67,7 +85,7 @@ Upgrade node pools:
 az aks show -n aks-ops-cbx1 -g aks-ops -o table  # control plane info
 kubectl get nodes -o wide                        # worker node info
 
-az aks nodepool upgrade --cluster-name aks-ops-cbx1 --resource-group aks-ops -k 1.15.10 --name nodepool1
+az aks nodepool upgrade --cluster-name aks-ops-cbx1 --resource-group aks-ops -k $UPGRADE_TO_VERSION --name nodepool1
 kubectl get nodes -o wide -w
 ```
 
@@ -79,7 +97,6 @@ Or, use a blue/green node pool strategy:
 * Delete old node pool
 
 See [Walkthrough of automating AKS upgrades](https://github.com/cloudnativegbb/aks-upgrades) for sample scripts.
-
 
 Check the Azure Portal while running these commands.
 
@@ -93,7 +110,7 @@ Follow steps in: https://github.com/clarenceb/traefik-ingress-example.git
 * Deploy app
 
 ```sh
-kubectl ns create azure-vote
+kubectl create ns azure-vote
 # Update apps/azure-vote/azure-vote-ingress.yaml with <DNSNAME>.<LOCATION> value
 kubectl apply -f apps/azure-vote -n azure-vote
 ```
@@ -103,7 +120,8 @@ Browse to: `https://<DNSNAME>.<LOCATION>.cloudapp.azure.com`
 Generate some traffic:
 
 ```sh
-k6 run --vus 100 --duration 30s -e VOTE_URL=https://<DNSNAME>.<LOCATION>.cloudapp.azure.com/ generate-votes-test.js
+VOTE_URL=https://<DNSNAME>.<LOCATION>.cloudapp.azure.com/
+k6 run --vus 100 --duration 30s -e VOTE_URL=$VOTE_URL generate-votes-test.js
 ```
 
 Introduce some deliberate issues

@@ -20,11 +20,11 @@ spec:
         image: microsoft/azure-vote-front:v1
         resources:
           requests:
-            cpu: 50m
+            cpu: 20m
             memory: 128Mi
           limits:
-            cpu: 50m
-            memory: 256Mi
+            cpu: 20m
+            memory: 128Mi
         ports:
         - containerPort: 80
         env:
